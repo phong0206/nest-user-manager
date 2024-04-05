@@ -1,15 +1,14 @@
-import { join } from 'path';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
-import { isNil } from '@nestjsx/util';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
-export const withCache: TypeOrmModuleOptions = {
+export const typeOrmConfig: TypeOrmModuleOptions = {
     type: 'postgres',
-    host: '127.0.0.1',
-    port: 5432 ,
-    username: 'root',
-    password: 'root',
-    database: 'nestjsx_user_manager',
+    host: process.env.POSTGRES_HOST,
+    port: +process.env.POSTGRES_PORT,
+    username: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD,
+    database: process.env.POSTGRES_DB,
+    entities: [__dirname + '/**/entity/*.entity{.ts,.js}'],
     synchronize: true,
-    logging: !isNil(process.env.TYPEORM_LOGGING) ? !!parseInt(process.env.TYPEORM_LOGGING, 10) : true,
-    entities: [join(__dirname, './**/*.entity{.ts,.js}')],
 };
