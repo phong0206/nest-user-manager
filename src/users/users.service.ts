@@ -12,7 +12,7 @@ export class UsersService {
 
     async createUser(createUserDto: CreateUserDto) {
         const checkUser = await this.userMethodDB.findOneByData({ email: createUserDto.email });
-        if (checkUser) throw new HttpException({ message: 'User alrady exists' }, HttpStatus.BAD_REQUEST);
+        if (checkUser) throw new HttpException({ message: 'User already exists' }, HttpStatus.BAD_REQUEST);
         createUserDto.password = await this.authService.hashPassword(createUserDto.password)
         const newUser = await this.userMethodDB.create(createUserDto)
         const { password, ...userData } = newUser

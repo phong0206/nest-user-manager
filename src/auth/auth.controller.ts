@@ -5,6 +5,7 @@ import {
     HttpException,
     HttpStatus,
     Post,
+    Query,
     Request,
     Response,
     UseGuards,
@@ -38,6 +39,16 @@ export class AuthController {
     async getUserLogout(@Request() request): Promise<Response> {
         this.authService.logout(request)
         throw new HttpException({ message: 'Logout successfully' }, HttpStatus.ACCEPTED);
+    }
+
+    @Get('/verify')
+    async activeUser(@Query() query): Promise<any> {
+        await this.authService.activeAccount(query.userId)
+    }
+
+    @Post('/get-new-password')
+    async getNewPassword(@Body() input: any): Promise<any> {
+        await this.authService.getNewPassword(input.email)
     }
 
 }

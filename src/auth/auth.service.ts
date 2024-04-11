@@ -4,14 +4,14 @@ import {
 } from '@nestjs/common';
 import { UserMethodDB } from '../users/user.methodDB';
 import { User } from "../users/user.entity"
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
 const bcrypt = require("bcryptjs");
 import { v4 as uuidv4 } from 'uuid';
 import { JwtService } from '@nestjs/jwt';
-import { JWT_SECRET_KEY } from '../config/constants';
+import { JWT_SECRET_KEY, API_URL } from '../config/constants';
 import { RegisterDto } from "./dtos/auth.dto"
 import { RedisService } from "../redis/redis.service"
+import { MailerService } from '@nestjs-modules/mailer';
+import * as crypto from 'crypto';
 
 @Injectable()
 export class AuthService {
@@ -19,17 +19,13 @@ export class AuthService {
         algorithm: 'HS256',
         expiresIn: "7 days"
     };
-    private userMethodDB: UserMethodDB;
 
     constructor(
-        @InjectRepository(User)
-        private usersRepository: Repository<User>,
+        private readonly userMethodDB: UserMethodDB,
         private readonly jwtService: JwtService,
-        private redisService: RedisService,
-
-
+        private readonly redisService: RedisService,
+        private readonly mailerService: MailerService
     ) {
-        this.userMethodDB = new UserMethodDB(usersRepository);
     }
 
     async hashPassword(password: string): Promise<string> {
@@ -56,6 +52,20 @@ export class AuthService {
 
     async login(user: User) {
         const { password, ...userData } = user
+        if (user.isActive === false) {
+
+            await this.mailerService.sendMail({
+                to: user.email, subject: "Active account", template: './active-account', context: {
+                    name: user.name.first ||user.email,
+                    verificationLink: `${API_URL}/auth/verify?userId=${user.id}`
+                }
+            })
+            throw new HttpException({
+                status: HttpStatus.ACCEPTED,
+                message: 'Your account is not active. Please, check email to active your account!',
+                user: userData
+            }, HttpStatus.ACCEPTED);
+        }
         const payload: any = {
             email: user.email,
             id: user.id,
@@ -79,7 +89,47 @@ export class AuthService {
 
         const checkEmailExists = await this.userMethodDB.findOneByData({ email: input.email });
         if (checkEmailExists) throw new HttpException({ message: 'User already exists' }, HttpStatus.BAD_REQUEST);
+
         input.password = await this.hashPassword(input.password);
-        return await this.userMethodDB.create(input);
+        const user = await this.userMethodDB.create(input);
+        return await this.mailerService.sendMail({
+            to: input.email, subject: "Verify your email address", template: './active-account', context: {
+                name: input.name.first ||input.email,
+                verificationLink: `${API_URL}/auth/verify?userId=${user.id}`
+            }
+        })
+    }
+
+    async activeAccount(userId) {
+        const user = await this.userMethodDB.findById(userId);
+        if (user.isActive) {
+            throw new HttpException({
+                status: HttpStatus.BAD_REQUEST,
+                message: 'Request invalid',
+            }, HttpStatus.BAD_REQUEST);
+        }
+        await this.userMethodDB.update(userId, { isActive: true })
+        throw new HttpException({ message: 'Active user successfully' }, HttpStatus.ACCEPTED);
+    }
+
+    async getNewPassword(email: string) {
+        const user = await this.userMethodDB.findOneByData({ email: email });
+        if (!user) {
+            throw new HttpException({
+                status: HttpStatus.BAD_REQUEST,
+                message: 'User is not exists',
+            }, HttpStatus.BAD_REQUEST);
+        }
+        const newPass = crypto.randomBytes(10).toString('hex').substr(0, 10);
+        const hashPass = await this.hashPassword(newPass);
+
+        await this.userMethodDB.update(user.id, { password: hashPass })
+        await this.mailerService.sendMail({
+            to: user.email, subject: "Get new password", template: './getNewPassword', context: {
+                name: user.name.first || user.email,
+                newPassword: newPass
+            }
+        })
+
     }
 }

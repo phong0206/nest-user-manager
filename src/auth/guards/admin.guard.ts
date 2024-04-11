@@ -11,11 +11,13 @@ export class AdminAuthGuard implements CanActivate {
         context: ExecutionContext,
     ): Promise<boolean> {
         const request = context.switchToHttp().getRequest();
-        console.log(123123123, request.user)
         const user = await this.isValidUser(request.user);
 
         if (!user.isAdmin) {
             throw new UnauthorizedException('Only admins are allowed to perform this action.');
+        }
+        if (!user.isActive) {
+            throw new UnauthorizedException('Your account is not active.');
         }
 
         return true;

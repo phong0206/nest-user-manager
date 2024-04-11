@@ -7,7 +7,8 @@ import { DatabaseModule } from './database/database.module';
 import * as Joi from '@hapi/joi'
 import { AuthModule } from './auth/auth.module';
 import { RedisModule } from './redis/redis.module';
-
+import { MailerModule } from '@nestjs-modules/mailer';
+import { MailModule } from './mail/mail.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -21,14 +22,16 @@ import { RedisModule } from './redis/redis.module';
       }),
       isGlobal: true,
     }),
+    MailerModule,
     UsersModule,
     BlogsModule,
     ImagesModule,
     DatabaseModule,
     AuthModule,
-    RedisModule],
+    RedisModule,
+    MailModule,
+  ],
   controllers: [],
   providers: []
 })
-
 export class AppModule { }
