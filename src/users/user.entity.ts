@@ -18,7 +18,7 @@ import {
 } from 'typeorm';
 import { BaseEntity } from "../base-entity"
 import { CrudValidationGroups } from '@nestjsx/crud';
-import { Type } from 'class-transformer';
+import { Type, Exclude } from 'class-transformer';
 import { Blog } from '../blogs/blog.entity'
 const { CREATE, UPDATE } = CrudValidationGroups;
 
@@ -36,7 +36,7 @@ export class Name {
     last: string;
 }
 @Entity('users')
-class User extends BaseEntity {
+export class User extends BaseEntity {
     @IsOptional({ groups: [UPDATE] }) // can be ignore in method update
     @IsNotEmpty({ groups: [CREATE] })
     @IsString({ always: true })
@@ -56,10 +56,15 @@ class User extends BaseEntity {
     name: Name;
 
     @IsOptional({ groups: [UPDATE] })
-    @IsNotEmpty({ groups: [CREATE] })
     @IsBoolean({ always: true })
     @Column({ type: 'boolean', default: false })
     isActive: boolean;
+
+    @IsOptional({ groups: [UPDATE] })
+    @IsBoolean({ always: true })
+    @Column({ type: 'boolean', default: false })
+    @Exclude({ toPlainOnly: true })
+    isAdmin: boolean;
 
     @IsOptional({ groups: [UPDATE] })
     @Column({ type: 'integer' })
@@ -80,5 +85,4 @@ class User extends BaseEntity {
     @Type(() => Blog)
     blog: Blog[];
 }
-export default User;
 

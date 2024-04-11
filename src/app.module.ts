@@ -1,15 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { typeOrmConfig } from './orm.config';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { UsersController } from './users/users.controller';
 import { BlogsModule } from './blogs/blogs.module';
 import { ImagesModule } from "./images/images.module";
 import { DatabaseModule } from './database/database.module';
 import * as Joi from '@hapi/joi'
+import { AuthModule } from './auth/auth.module';
+import { RedisModule } from './redis/redis.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -20,14 +18,17 @@ import * as Joi from '@hapi/joi'
         POSTGRES_PASSWORD: Joi.string().required(),
         POSTGRES_DB: Joi.string().required(),
         PORT: Joi.number().default(3000),
-      })
+      }),
+      isGlobal: true,
     }),
     UsersModule,
     BlogsModule,
     ImagesModule,
-    DatabaseModule],
-  controllers: [AppController],
-  providers: [AppService,]
+    DatabaseModule,
+    AuthModule,
+    RedisModule],
+  controllers: [],
+  providers: []
 })
 
 export class AppModule { }

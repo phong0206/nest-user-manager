@@ -17,7 +17,7 @@ import { CrudValidationGroups } from '@nestjsx/crud';
 const { CREATE, UPDATE } = CrudValidationGroups;
 
 import { Type } from 'class-transformer';
-import  User  from "../users/user.entity";
+import  {User}  from "../users/user.entity";
 import { Image } from "../images/image.entity";
 
 
