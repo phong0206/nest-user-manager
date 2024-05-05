@@ -4,6 +4,8 @@ import { ImagesService } from './images.service';
 
 @Module({
   controllers: [ImagesController],
-  providers: [ImagesService]
+  providers: [ImagesService],
+  imports: [],
+
 })
 export class ImagesModule { }

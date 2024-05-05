@@ -9,6 +9,9 @@ import { AuthModule } from './auth/auth.module';
 import { RedisModule } from './redis/redis.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { MailModule } from './mail/mail.module';
+import { FollowsModule } from './follows/follows.module';
+import { CommentsModule } from './comments/comments.module';
+import { LikesModule } from './likes/likes.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -30,6 +33,9 @@ import { MailModule } from './mail/mail.module';
     AuthModule,
     RedisModule,
     MailModule,
+    FollowsModule,
+    CommentsModule,
+    LikesModule,
   ],
   controllers: [],
   providers: []

@@ -9,7 +9,6 @@ import { JwtModule } from '@nestjs/jwt';
 import { JWT_SECRET_KEY, EXPIRES_TIME_SECONDS } from "../config/constants"
 import { RedisService } from "../redis/redis.service"
 import { RedisModule } from "../redis/redis.module"
-import { MailerService } from '@nestjs-modules/mailer';
 import { MailModule } from '../mail/mail.module';
 import { UserMethodDB } from "../users/user.methodDB"
 @Module({
