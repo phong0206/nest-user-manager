@@ -8,9 +8,11 @@ import { AdminAuthGuard } from "../auth/guards/admin.guard"
 
 @Controller('users')
 export class UsersController {
-    constructor(private readonly usersService: UsersService,
+    constructor(
+        private readonly usersService: UsersService,
         private redisService: RedisService,
     ) { }
+    
     @UseGuards(JwtAuthGuard, AdminAuthGuard)
     @Post('create-user')
     async createUser(@Body() createUserDto: CreateUserDto) {

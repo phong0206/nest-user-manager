@@ -9,7 +9,6 @@ export class UsersService {
         private readonly authService: AuthService
     ) {
     }
-
     async createUser(createUserDto: CreateUserDto) {
         const checkUser = await this.userMethodDB.findOneByData({ email: createUserDto.email });
         if (checkUser) throw new HttpException({ message: 'User already exists' }, HttpStatus.BAD_REQUEST);
@@ -64,6 +63,4 @@ export class UsersService {
             message: 'Update successfully',
         }, HttpStatus.ACCEPTED);
     }
-
 }
-

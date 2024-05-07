@@ -17,7 +17,7 @@ import { CrudValidationGroups } from '@nestjsx/crud';
 const { CREATE, UPDATE } = CrudValidationGroups;
 
 import { Type } from 'class-transformer';
-import  {User}  from "../users/user.entity";
+import { User } from "../users/user.entity";
 import { Image } from "../images/image.entity";
 
 
@@ -42,7 +42,7 @@ export class Blog extends BaseEntity {
     @MinLength(3, { always: true, message: "Author must be at least 3 characters long" })
     author: string;
 
-    @Column()
+    @Column({ default: 0 })
     @IsOptional({ groups: [UPDATE] })
     @IsNumber({}, { always: true })
     view: number;
@@ -50,7 +50,9 @@ export class Blog extends BaseEntity {
     @Column({ nullable: false })
     userId: string;
 
-    
+
+
+
     /**
     * Relations
     */

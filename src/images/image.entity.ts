@@ -12,6 +12,11 @@ import { CrudValidationGroups } from '@nestjsx/crud';
 import { Blog } from '../blogs/blog.entity'
 const { CREATE, UPDATE } = CrudValidationGroups;
 
+export enum ImageType {
+    BLOG = 'blog',
+    AVATAR = 'avatar'
+}
+
 @Entity('images')
 export class Image extends BaseEntity {
     @Column({ type: 'varchar' })
@@ -41,6 +46,18 @@ export class Image extends BaseEntity {
     @IsNotEmpty({ groups: [CREATE], message: 'Size cannot be blank.' })
     @Matches(/^d+$/, { message: 'Size must be a positive number.' })
     size: string;
+
+    @Column({ type: 'boolean' })
+    isUsed: boolean;
+
+    @Column({ nullable: false })
+    userId: string;
+
+    @Column({
+        type: 'enum',
+        enum: ImageType
+    })
+    typeImg: ImageType;
 
     @Column({ nullable: false })
     blogId: string;
