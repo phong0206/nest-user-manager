@@ -31,7 +31,8 @@ export class AuthController {
     async registerUser(@Body() input: RegisterDto) {
         const user = await this.authService.register(input);
         const { password, ...userData } = user
-        return userData
+        throw new HttpException({ message: 'Created account successfully. Please check mail to active account.', user: userData }, HttpStatus.ACCEPTED);
+
     }
 
     @UseGuards(JwtAuthGuard)

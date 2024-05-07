@@ -7,15 +7,14 @@ import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 export class BlogsController {
     constructor(
         private readonly blogsService: BlogsService,
-    ) {
-
-    }
+    ) { }
 
     @UseGuards(JwtAuthGuard)
     @Post('upload-blog')
     @UseInterceptors(FilesInterceptor('file', 12, uploadMultipleImageBlog))
-    async uploadImgsBlog(@UploadedFiles() files: Express.Multer.File[], @Req() req, @Res() res) {
-        await this.blogsService.uploadBlog(req, files)
-        res.send(files);
+    async uploadImgsBlog( @Req() req, @Res() res) {
+        await this.blogsService.uploadBlog(req)
+        res.send(req.files);
     }
+
 }

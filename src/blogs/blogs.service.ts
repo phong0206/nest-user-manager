@@ -3,6 +3,11 @@ import { UserMethodDB } from "../users/user.methodDB"
 import { ImageMethodDB } from './../images/image.methodDB'
 import { BlogMethodDB } from './blog.methodDB';
 
+interface dataBlog {
+    title?: string,
+    content?: string,
+
+}
 @Injectable()
 export class BlogsService {
     constructor(
@@ -12,8 +17,14 @@ export class BlogsService {
 
     ) {
     }
-    async uploadBlog(req: any, files: any): Promise<any> {
+    async uploadBlog(req: any): Promise<any> {
         const userId = req.user.id
+        const dataBlog = req.body
+        const files = req.files
+
+         
+        
+        console.log(2313,req.files)
 
 
     }

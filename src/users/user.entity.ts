@@ -20,6 +20,8 @@ import { BaseEntity } from "../base-entity"
 import { CrudValidationGroups } from '@nestjsx/crud';
 import { Type, Exclude } from 'class-transformer';
 import { Blog } from '../blogs/blog.entity'
+import { Follow } from "../follows/follow.entity"
+import { Like } from "../likes/like.entity"
 const { CREATE, UPDATE } = CrudValidationGroups;
 
 export class Name {
@@ -84,5 +86,19 @@ export class User extends BaseEntity {
     })
     @Type(() => Blog)
     blog: Blog[];
+
+    @OneToMany((type) => Follow, (f) => f.user, {
+        persistence: false,
+        onDelete: 'CASCADE',
+    })
+    @Type(() => Follow)
+    follow: Follow[];
+
+    @OneToMany((type) => Like, (l) => l.user, {
+        persistence: false,
+        onDelete: 'CASCADE',
+    })
+    @Type(() => Like)
+    like: Like[];
 }
 

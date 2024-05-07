@@ -92,12 +92,13 @@ export class AuthService {
 
         input.password = await this.hashPassword(input.password);
         const user = await this.userMethodDB.create(input);
-        return await this.mailerService.sendMail({
+        await this.mailerService.sendMail({
             to: input.email, subject: "Verify your email address", template: './active-account', context: {
                 name: input.name.first ||input.email,
                 verificationLink: `${API_URL}/auth/verify?userId=${user.id}`
             }
         })
+        return user
     }
 
     async activeAccount(userId) {

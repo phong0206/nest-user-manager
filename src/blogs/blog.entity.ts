@@ -19,6 +19,7 @@ const { CREATE, UPDATE } = CrudValidationGroups;
 import { Type } from 'class-transformer';
 import { User } from "../users/user.entity";
 import { Image } from "../images/image.entity";
+import { Like } from "../likes/like.entity"
 
 
 @Entity('blogs')
@@ -51,8 +52,6 @@ export class Blog extends BaseEntity {
     userId: string;
 
 
-
-
     /**
     * Relations
     */
@@ -66,5 +65,12 @@ export class Blog extends BaseEntity {
     })
     @Type(() => Image)
     image: Image[];
+
+    @OneToMany((type) => Like, (l) => l.blog, {
+        persistence: false,
+        onDelete: 'CASCADE',
+    })
+    @Type(() => Like)
+    like: Like[];
 
 }
