@@ -12,13 +12,16 @@ export class ImagesService {
 
   ) { }
 
-  async uploadMultipleImageBlogPost(files: any[]) {
-    this.imageMethodDB.insertMany(files)
+  async uploadMultipleImageBlogPost(data: any[]) {
+    return await this.imageMethodDB.insertMany(data)
   }
 
   async uploadAvatar(data: any) {
-    console.log(12312, data)
-    this.imageMethodDB.create(data)
+    return await this.imageMethodDB.create(data)
+  }
+
+  async updateBlogIdImages(imgIds: Array<string>, blogId: string){
+    await this.imageMethodDB.setBlogIdForImages(imgIds, blogId)
   }
 
 

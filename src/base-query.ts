@@ -23,9 +23,11 @@ export abstract class BaseQuery<Entity> {
     const entity = this.repository.create(data as Entity);
     return this.repository.save(entity);
   }
+
   async insert(data: Partial<Entity>): Promise<Entity> {
     return this.repository.save(data as Entity);
   }
+
   async insertMany(data: Partial<Entity>[]): Promise<Entity[]> {
     return this.repository.save(data as Entity[]);
   }
@@ -39,8 +41,8 @@ export abstract class BaseQuery<Entity> {
     await this.repository.upsert(data, checkField);
     const criteria = checkField.reduce((acc, field) => ({ ...acc, [field]: data[field] }), {});
     return await this.repository.findOneOrFail({ where: criteria });
-
   }
+  
   async deleteById(id: number | string): Promise<Entity> {
     const item = await this.repository.findOneById(id);
     if (!item) {
@@ -53,6 +55,7 @@ export abstract class BaseQuery<Entity> {
   async countByData(data: FindOptionsWhere<Entity>): Promise<number> {
     return this.repository.countBy(data);
   }
+
   async update(id: number | string, data: Partial<Entity>): Promise<Entity> {
     const item = await this.repository.findOneById(id);
     if (!item) {

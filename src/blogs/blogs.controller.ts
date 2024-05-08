@@ -1,4 +1,4 @@
-import { Controller, Post, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Controller, HttpException, HttpStatus, Post, Req, Res, UseGuards, UseInterceptors } from '@nestjs/common';
 import { BlogsService } from "./blogs.service"
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 @Controller('blog')
@@ -10,8 +10,12 @@ export class BlogsController {
     @UseGuards(JwtAuthGuard)
     @Post('upload-blog')
     async uploadImgsBlog( @Req() req, @Res() res) {
-        await this.blogsService.uploadBlog(req)
-        res.send(req.files);
+        const newBlog = await this.blogsService.uploadBlog(req)
+        throw new HttpException({
+            status: HttpStatus.ACCEPTED,
+            message: 'Upload blog successfully',
+            newBlog
+        }, HttpStatus.ACCEPTED);
     }
 
 }
