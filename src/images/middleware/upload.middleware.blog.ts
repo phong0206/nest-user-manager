@@ -32,7 +32,7 @@ function checkFileType(file: Express.Multer.File, cb: Function) {
 
 export const uploadMultipleImageBlog: multer.Options = {
     storage,
-    limits: { fileSize: 5 * 1024 * 1024 },
+    limits: { fileSize: 100 * 1024 * 1024 },
     fileFilter: (req: Request, file: Express.Multer.File, cb: Function) => {
         checkFileType(file, cb);
     },

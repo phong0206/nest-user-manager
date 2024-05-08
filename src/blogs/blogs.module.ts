@@ -17,6 +17,6 @@ import { RedisModule } from "../redis/redis.module"
   imports: [TypeOrmModule.forFeature([User, Image, Blog]), RedisModule
   ],
   controllers: [BlogsController],
-  providers: [BlogsService, UserMethodDB, ImageMethodDB, BlogMethodDB, JwtService, RedisService]
+  providers: [BlogsService, UserMethodDB, BlogMethodDB, JwtService, RedisService]
 })
 export class BlogsModule { }
