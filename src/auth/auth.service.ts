@@ -10,8 +10,8 @@ import { JwtService } from '@nestjs/jwt';
 import { JWT_SECRET_KEY, API_URL } from '../config/constants';
 import { RegisterDto } from "./dtos/auth.dto"
 import { RedisService } from "../redis/redis.service"
-import { MailerService } from '@nestjs-modules/mailer';
-import * as crypto from 'crypto';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 @Injectable()
 export class AuthService {
   private _options: any = {
@@ -23,8 +23,7 @@ export class AuthService {
     private readonly userMethodDB: UserMethodDB,
     private readonly jwtService: JwtService,
     private readonly redisService: RedisService,
-    private readonly mailerService: MailerService
-  ) {
+    @InjectQueue('email_sending') private emailQueue: Queue) {
   }
 
   async hashPassword(password: string): Promise<string> {
@@ -37,6 +36,7 @@ export class AuthService {
   ): Promise<any> {
     return await bcrypt.compare(password, storePasswordHash);
   }
+
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.userMethodDB.findOneByData({ email: email });
     if (!user) throw new HttpException({ message: 'Email incorrect' }, HttpStatus.BAD_REQUEST);
@@ -53,12 +53,13 @@ export class AuthService {
     const { password, ...userData } = user
     if (user.isActive === false) {
 
-      await this.mailerService.sendMail({
+      await this.emailQueue.add({
         to: user.email, subject: "Active account", template: './active-account', context: {
           name: user.name.first || user.email,
           verificationLink: `${API_URL}/auth/verify?userId=${user.id}`
         }
-      })
+      });
+
       throw new HttpException({
         status: HttpStatus.ACCEPTED,
         message: 'Your account is not active. Please, check email to active your account!',
@@ -91,12 +92,14 @@ export class AuthService {
 
     input.password = await this.hashPassword(input.password);
     const user = await this.userMethodDB.create(input);
-    await this.mailerService.sendMail({
+
+    await this.emailQueue.add({
       to: input.email, subject: "Verify your email address", template: './active-account', context: {
         name: input.name.first || input.email,
         verificationLink: `${API_URL}/auth/verify?userId=${user.id}`
       }
-    })
+    });
+
     return user
   }
 
@@ -125,12 +128,14 @@ export class AuthService {
 
     // await this.userMethodDB.update(user.id, { password: hashPass })
 
-    await this.mailerService.sendMail({
+
+    await this.emailQueue.add({
       to: user.email, subject: "Verify reset password", template: './getNewPassword', context: {
         name: user.name.first || user.email,
         linkverify: `${API_URL}/reset-password/`
       }
-    })
+    });
+
 
   }
 }

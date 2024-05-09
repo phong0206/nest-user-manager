@@ -19,7 +19,7 @@ const storage = multer.diskStorage({
 });
 
 function checkFileType(file: Express.Multer.File, cb: Function) {
-    const fileTypes = /jpeg|jpg|png|gif/;
+    const fileTypes = /jpeg|jpg|png|gif|mp4/;
     const extName = fileTypes.test(path.extname(file.originalname).toLowerCase());
     const mimeType = fileTypes.test(file.mimetype);
 

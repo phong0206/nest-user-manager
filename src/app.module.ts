@@ -12,6 +12,9 @@ import { MailModule } from './mail/mail.module';
 import { FollowsModule } from './follows/follows.module';
 import { CommentsModule } from './comments/comments.module';
 import { LikesModule } from './likes/likes.module';
+import { BullModule } from '@nestjs/bullmq';
+
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -24,6 +27,20 @@ import { LikesModule } from './likes/likes.module';
         PORT: Joi.number().default(3000),
       }),
       isGlobal: true,
+    }),
+    BullModule.forRootAsync({
+      useFactory: () => ({
+        connection: {
+          host: process.env.REDIS_HOST,
+          port: +process.env.REDIS_PORT,
+        },
+      }),
+    }),
+    BullModule.registerQueue({
+      name: 'upload_images_processing',
+    }),
+    BullModule.registerQueue({
+      name: 'email_sending',
     }),
     MailerModule,
     UsersModule,

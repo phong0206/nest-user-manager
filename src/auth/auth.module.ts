@@ -11,8 +11,13 @@ import { RedisService } from "../redis/redis.service"
 import { RedisModule } from "../redis/redis.module"
 import { MailModule } from '../mail/mail.module';
 import { UserMethodDB } from "../users/user.methodDB"
+import { BullModule } from '@nestjs/bull';
+
 @Module({
   imports: [
+    BullModule.registerQueue({
+      name: 'email_sending',
+    }),
     RedisModule,
     MailModule,
     PassportModule,

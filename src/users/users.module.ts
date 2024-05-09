@@ -8,8 +8,12 @@ import { JwtService } from '@nestjs/jwt';
 import { RedisModule } from "../redis/redis.module"
 import { RedisService } from "../redis/redis.service"
 import { UserMethodDB } from "./user.methodDB"
+import { BullModule } from '@nestjs/bull';
+
 @Module({
-  imports: [TypeOrmModule.forFeature([User]), RedisModule],
+  imports: [TypeOrmModule.forFeature([User]), RedisModule, BullModule.registerQueue({
+    name: 'email_sending',
+  })],
   controllers: [UsersController],
   providers: [UsersService, AuthService, JwtService, RedisService, UserMethodDB]
 })
