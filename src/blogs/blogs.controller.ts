@@ -3,19 +3,30 @@ import { BlogsService } from "./blogs.service"
 import { JwtAuthGuard } from '../auth/guards/jwt.guard';
 @Controller('blog')
 export class BlogsController {
-    constructor(
-        private readonly blogsService: BlogsService,
-    ) { }
+  constructor(
+    private readonly blogsService: BlogsService,
+  ) { }
 
-    @UseGuards(JwtAuthGuard)
-    @Post('upload-blog')
-    async uploadImgsBlog( @Req() req, @Res() res) {
-        const newBlog = await this.blogsService.uploadBlog(req)
-        throw new HttpException({
-            status: HttpStatus.ACCEPTED,
-            message: 'Upload blog successfully',
-            newBlog
-        }, HttpStatus.ACCEPTED);
-    }
+  @UseGuards(JwtAuthGuard)
+  @Post('upload-blog')
+  async uploadImgsBlog(@Req() req, @Res() res) {
+    const newBlog = await this.blogsService.uploadBlog(req)
+    throw new HttpException({
+      status: HttpStatus.ACCEPTED,
+      message: 'Upload blog successfully',
+      newBlog
+    }, HttpStatus.ACCEPTED);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('edit-blog')
+  async editBlog(@Req() req, @Res() res) {
+    const newBlog = await this.blogsService.editBlog(req)
+    throw new HttpException({
+      status: HttpStatus.ACCEPTED,
+      message: 'Update blog successfully',
+      newBlog
+    }, HttpStatus.ACCEPTED);
+  }
 
 }

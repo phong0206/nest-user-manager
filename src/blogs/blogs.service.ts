@@ -6,7 +6,6 @@ import { BlogMethodDB } from './blog.methodDB';
 interface dataBlog {
   title?: string,
   content?: string,
-
 }
 @Injectable()
 export class BlogsService {
@@ -28,5 +27,10 @@ export class BlogsService {
     }
     const dataBlog = req.body
     return await this.blogMethodDB.create({ ...dataBlog, userId: userId, author: (user.name.first + user.name.last) || user.email })
+  }
+
+  async editBlog(req: any): Promise<any> {
+    const { title, content, blogId } = req.body
+    return await this.blogMethodDB.update(blogId, { title: title, content: content })
   }
 }
