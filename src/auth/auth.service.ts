@@ -12,6 +12,7 @@ import { RegisterDto } from "./dtos/auth.dto"
 import { RedisService } from "../redis/redis.service"
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
+import * as crypto from "crypto"
 @Injectable()
 export class AuthService {
   private _options: any = {
@@ -23,7 +24,8 @@ export class AuthService {
     private readonly userMethodDB: UserMethodDB,
     private readonly jwtService: JwtService,
     private readonly redisService: RedisService,
-    @InjectQueue('email_sending') private emailQueue: Queue) {
+    @InjectQueue('email_sending')
+    private readonly emailQueue: Queue) {
   }
 
   async hashPassword(password: string): Promise<string> {
@@ -123,19 +125,45 @@ export class AuthService {
         message: 'User is not exists',
       }, HttpStatus.BAD_REQUEST);
     }
-    // const newPass = crypto.randomBytes(10).toString('hex').substr(0, 10);
-    // const hashPass = await this.hashPassword(newPass);
 
-    // await this.userMethodDB.update(user.id, { password: hashPass })
-
+    const token = await this.jwtService.sign({ email: email, userId: user.id, firstname: user.name.first }, {
+      algorithm: 'HS256',
+      expiresIn: "5 minutes",
+      secret: JWT_SECRET_KEY
+    });
 
     await this.emailQueue.add({
-      to: user.email, subject: "Verify reset password", template: './getNewPassword', context: {
+      to: user.email, subject: "Verify reset password", template: './verigyMailToGetNewPassword', context: {
         name: user.name.first || user.email,
-        linkverify: `${API_URL}/reset-password/`
+        linkverify: `${API_URL}/verify-get-new-password/token=${token}`
       }
     });
 
+    throw new HttpException({ token: token }, HttpStatus.ACCEPTED);
+
+
 
   }
+
+  async verifyGetNewPassword(token: string) {
+    const isTokenValid = await this.jwtService.verify(token)
+    if (!isTokenValid) {
+      throw new HttpException({
+        status: HttpStatus.BAD_REQUEST,
+        message: 'Verification failed !',
+      }, HttpStatus.BAD_REQUEST);
+    }
+    const newPass = crypto.randomBytes(10).toString('hex').substr(0, 10);
+    const hashPass = await this.hashPassword(newPass);
+
+    await this.userMethodDB.update(isTokenValid.userId, { password: hashPass })
+    await this.emailQueue.add({
+      to: isTokenValid.email, subject: "Get new password", template: './getNewPass', context: {
+        name: isTokenValid.firstname || isTokenValid.email,
+        newPass: newPass
+      }
+    });
+
+  }
+
 }

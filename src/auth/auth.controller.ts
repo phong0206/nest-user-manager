@@ -35,6 +35,14 @@ export class AuthController {
 
     }
 
+    @Get('verify-get-new-password')
+    async verifyEmail(@Query('token') token: string) {
+        console.log(123,token)
+        await this.authService.verifyGetNewPassword(token)
+        throw new HttpException({ message: 'Get new Password successfully' }, HttpStatus.ACCEPTED);
+
+    }
+
     @UseGuards(JwtAuthGuard)
     @Post('/logout')
     async getUserLogout(@Request() request): Promise<Response> {

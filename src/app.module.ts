@@ -12,7 +12,8 @@ import { MailModule } from './mail/mail.module';
 import { FollowsModule } from './follows/follows.module';
 import { CommentsModule } from './comments/comments.module';
 import { LikesModule } from './likes/likes.module';
-import { BullModule } from '@nestjs/bullmq';
+import { BullModule } from '@nestjs/bull';
+import { PlayerModule } from './player/player.module';
 
 
 @Module({
@@ -28,19 +29,22 @@ import { BullModule } from '@nestjs/bullmq';
       }),
       isGlobal: true,
     }),
-    BullModule.forRootAsync({
-      useFactory: () => ({
-        connection: {
-          host: process.env.REDIS_HOST,
-          port: +process.env.REDIS_PORT,
-        },
-      }),
+    BullModule.forRoot({
+      redis: {
+        host: 'localhost',
+        port: 6379,
+      }
     }),
     BullModule.registerQueue({
       name: 'upload_images_processing',
     }),
     BullModule.registerQueue({
       name: 'email_sending',
+      // processors: [{
+      //   name: 'sendEmail',
+      //   path: __dirname + '/queues/email.processor.ts',
+      //   concurrency: 5  
+      // }]
     }),
     MailerModule,
     UsersModule,
@@ -53,6 +57,7 @@ import { BullModule } from '@nestjs/bullmq';
     FollowsModule,
     CommentsModule,
     LikesModule,
+    PlayerModule,
   ],
   controllers: [],
   providers: []

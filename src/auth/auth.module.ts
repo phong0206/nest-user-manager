@@ -12,7 +12,7 @@ import { RedisModule } from "../redis/redis.module"
 import { MailModule } from '../mail/mail.module';
 import { UserMethodDB } from "../users/user.methodDB"
 import { BullModule } from '@nestjs/bull';
-
+import { EmailProcessor } from "../queues/email.processor"
 @Module({
   imports: [
     BullModule.registerQueue({
@@ -27,7 +27,7 @@ import { BullModule } from '@nestjs/bull';
       signOptions: { expiresIn: EXPIRES_TIME_SECONDS },
     }),
   ],
-  providers: [AuthService, LocalStrategy, RedisService, UserMethodDB],
+  providers: [AuthService, LocalStrategy, RedisService, UserMethodDB, EmailProcessor],
   controllers: [AuthController],
 
 })

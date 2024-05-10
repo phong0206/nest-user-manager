@@ -7,6 +7,7 @@ export class AdminAuthGuard implements CanActivate {
         private readonly userMethodDB: UserMethodDB
     ) {
     }
+    
     async canActivate(
         context: ExecutionContext,
     ): Promise<boolean> {
