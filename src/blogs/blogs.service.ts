@@ -1,6 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UserMethodDB } from "../users/user.methodDB"
-import { ImageMethodDB } from './../images/image.methodDB'
 import { BlogMethodDB } from './blog.methodDB';
 
 interface dataBlog {

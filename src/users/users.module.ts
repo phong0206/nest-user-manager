@@ -9,12 +9,15 @@ import { RedisModule } from "../redis/redis.module"
 import { RedisService } from "../redis/redis.service"
 import { UserMethodDB } from "./user.methodDB"
 import { BullModule } from '@nestjs/bull';
+import { ResponseModule } from '../response/response.module';
+import { ResponseService } from '../response/response.service';
+
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User]), RedisModule, BullModule.registerQueue({
+  imports: [ResponseModule, TypeOrmModule.forFeature([User]), RedisModule, BullModule.registerQueue({
     name: 'email_sending',
   })],
   controllers: [UsersController],
-  providers: [UsersService, AuthService, JwtService, RedisService, UserMethodDB]
+  providers: [UsersService, AuthService, JwtService, RedisService, UserMethodDB, ResponseService]
 })
 export class UsersModule { }

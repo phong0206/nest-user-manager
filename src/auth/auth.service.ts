@@ -7,12 +7,15 @@ import { User } from "../users/user.entity"
 const bcrypt = require("bcryptjs");
 import { v4 as uuidv4 } from 'uuid';
 import { JwtService } from '@nestjs/jwt';
-import { JWT_SECRET_KEY, API_URL } from '../config/constants';
+import { JWT_SECRET_KEY, APP_URL } from '../config/constants';
 import { RegisterDto } from "./dtos/auth.dto"
 import { RedisService } from "../redis/redis.service"
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
-import * as crypto from "crypto"
+// import * as crypto from "crypto"
+import { ResponseService } from '../response/response.service';
+
+
 @Injectable()
 export class AuthService {
   private _options: any = {
@@ -24,8 +27,13 @@ export class AuthService {
     private readonly userMethodDB: UserMethodDB,
     private readonly jwtService: JwtService,
     private readonly redisService: RedisService,
+
     @InjectQueue('email_sending')
-    private readonly emailQueue: Queue) {
+    private readonly emailQueue: Queue,
+
+    private readonly responseService: ResponseService,
+
+  ) {
   }
 
   async hashPassword(password: string): Promise<string> {
@@ -41,32 +49,36 @@ export class AuthService {
 
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.userMethodDB.findOneByData({ email: email });
-    if (!user) throw new HttpException({ message: 'Email incorrect' }, HttpStatus.BAD_REQUEST);
+    if (!user) throw new HttpException({ message: "Email incorrect" }, HttpStatus.BAD_REQUEST)
     const checkPass = await this.comparePassword(password, user.password);
-    if (!checkPass) throw new HttpException({ message: 'Password incorrect' }, HttpStatus.BAD_REQUEST);
+    if (!checkPass) throw new HttpException({ message: "Password incorrect" }, HttpStatus.BAD_REQUEST)
     return user;
   }
 
-  async logout(req: any) {
-    this.redisService.addToBlacklist(req.user.jti)
+  async logout(res: any, req: any) {
+    await this.redisService.addToBlacklist(req.user.jti)
+    return this.responseService.successResponse(res, 'Logout successfully')
   }
 
-  async login(user: User) {
+  async login(res, user: User) {
     const { password, ...userData } = user
     if (user.isActive === false) {
+      const activeToken = await this.jwtService.sign({ id: user.id }, {
+        secret: process.env.JWT_SECRET_KEY,
+        algorithm: 'HS256',
+        expiresIn: '24h'
+      });
+      await this.redisService.setCaching(`active-${user.id}`, activeToken, 86400);
+
 
       await this.emailQueue.add({
         to: user.email, subject: "Active account", template: './active-account', context: {
           name: user.name.first || user.email,
-          verificationLink: `${API_URL}/auth/verify?userId=${user.id}`
+          verificationLink: `${APP_URL}/active-user?token=${activeToken}`
         }
       });
+      return this.responseService.ErrorResponse(res, 'Your account is not active. Please, check email to active your account!')
 
-      throw new HttpException({
-        status: HttpStatus.ACCEPTED,
-        message: 'Your account is not active. Please, check email to active your account!',
-        user: userData
-      }, HttpStatus.ACCEPTED);
     }
     const payload: any = {
       email: user.email,
@@ -78,92 +90,113 @@ export class AuthService {
       secret: JWT_SECRET_KEY
     };
     const access_token = await this.jwtService.sign(payload, signOptions);
+    return this.responseService.successResponseWithData(res, 'Your account is not active. Please, check email to active your account!', {
+      access_token,
+      userData
+    })
 
-    throw new HttpException({
-      status: HttpStatus.ACCEPTED,
-      message: 'Login successful',
-      data: { access_token, userData }
-    }, HttpStatus.ACCEPTED);
   }
 
-  async register(input: RegisterDto) {
-    if (input.isActive || input.isAdmin) throw new HttpException({ message: "Don't have field isAdmin and isActive" }, HttpStatus.BAD_REQUEST);
+
+  async register(res: any, input: RegisterDto) {
+    if (input.isActive || input.isAdmin) return this.responseService.ErrorResponse(res, "Don't have field isAdmin and isActive")
 
     const checkEmailExists = await this.userMethodDB.findOneByData({ email: input.email });
-    if (checkEmailExists) throw new HttpException({ message: 'User already exists' }, HttpStatus.BAD_REQUEST);
+    if (checkEmailExists) return this.responseService.ErrorResponse(res, "User already exists")
 
     input.password = await this.hashPassword(input.password);
     const user = await this.userMethodDB.create(input);
+    const { password, ...userData } = user
 
-    await this.emailQueue.add({
-      to: input.email, subject: "Verify your email address", template: './active-account', context: {
-        name: input.name.first || input.email,
-        verificationLink: `${API_URL}/auth/verify?userId=${user.id}`
-      }
-    });
-
-    return user
-  }
-
-  async activeAccount(userId) {
-    const user = await this.userMethodDB.findById(userId);
-    if (user.isActive) {
-      throw new HttpException({
-        status: HttpStatus.BAD_REQUEST,
-        message: 'Request invalid',
-      }, HttpStatus.BAD_REQUEST);
-    }
-    await this.userMethodDB.update(userId, { isActive: true })
-    throw new HttpException({ message: 'Active user successfully' }, HttpStatus.ACCEPTED);
-  }
-
-  async getNewPassword(email: string) {
-    const user = await this.userMethodDB.findOneByData({ email: email });
-    if (!user) {
-      throw new HttpException({
-        status: HttpStatus.BAD_REQUEST,
-        message: 'User is not exists',
-      }, HttpStatus.BAD_REQUEST);
-    }
-
-    const token = await this.jwtService.sign({ email: email, userId: user.id, firstname: user.name.first }, {
+    const activeToken = await this.jwtService.sign({ id: user.id }, {
+      secret: process.env.JWT_SECRET_KEY,
       algorithm: 'HS256',
-      expiresIn: "5 minutes",
-      secret: JWT_SECRET_KEY
+      expiresIn: '24h'
     });
+    await this.redisService.setCaching(`active-${user.id}`, activeToken, 86400);
+
 
     await this.emailQueue.add({
-      to: user.email, subject: "Verify reset password", template: './verigyMailToGetNewPassword', context: {
+      to: user.email, subject: "Active account", template: './active-account', context: {
         name: user.name.first || user.email,
-        linkverify: `${API_URL}/verify-get-new-password/token=${token}`
+        verificationLink: `${APP_URL}/active-user?token=${activeToken}`
       }
     });
-
-    throw new HttpException({ token: token }, HttpStatus.ACCEPTED);
-
-
+    return this.responseService.successResponseWithData(res, 'Created account successfully. Please check mail to active account.', { user: userData })
 
   }
 
-  async verifyGetNewPassword(token: string) {
-    const isTokenValid = await this.jwtService.verify(token)
-    if (!isTokenValid) {
-      throw new HttpException({
-        status: HttpStatus.BAD_REQUEST,
-        message: 'Verification failed !',
-      }, HttpStatus.BAD_REQUEST);
+  async activeAccount(res: any, token: string) {
+    const decodedToken = await this.jwtService.verify(token);
+    if (!decodedToken) {
+      return this.responseService.ErrorResponse(res, 'Verification failed');
     }
-    const newPass = crypto.randomBytes(10).toString('hex').substr(0, 10);
-    const hashPass = await this.hashPassword(newPass);
 
-    await this.userMethodDB.update(isTokenValid.userId, { password: hashPass })
-    await this.emailQueue.add({
-      to: isTokenValid.email, subject: "Get new password", template: './getNewPass', context: {
-        name: isTokenValid.firstname || isTokenValid.email,
-        newPass: newPass
-      }
-    });
+    const { id } = decodedToken;
+    const cachedToken = await this.redisService.getCaching(`active-${id}`);
+    if (token !== cachedToken) {
+      return this.responseService.ErrorResponse(res, 'Invalid or expired reset token.');
+    }
 
+    const user = await this.userMethodDB.findById(id);
+    if (user.isActive) {
+      return this.responseService.successResponse(res, 'User is already activated');
+    }
+    await this.userMethodDB.update(id, { isActive: true });
+    await this.redisService.delCaching(`active-${id}`);
+
+    return this.responseService.successResponse(res, 'User activated successfully');
   }
 
+
+  async sendRequestPasswordLink(res: any, email: string) {
+    const user = await this.userMethodDB.findOneByData({ email });
+    if (!user) {
+      return this.responseService.ErrorResponse(res, 'User not found')
+    }
+
+    const resetToken = await this.jwtService.sign({ id: user.id }, {
+      expiresIn: "5 minutes",
+      secret: process.env.JWT_SECRET_KEY,
+      algorithm: 'HS256',
+    });
+
+
+    await this.redisService.setCaching(`reset-${user.id}`, resetToken, 300);
+
+    await this.emailQueue.add({
+      to: user.email, subject: "Verify reset password", template: './verifyMailToGetNewPassword', context: {
+        name: user.name.first || user.email,
+        linkverify: `${APP_URL}/set-password?token=${resetToken}`
+      }
+    });
+    return this.responseService.successResponseWithData(res, 'Email sent successfully', resetToken)
+  }
+
+  async validateResetToken(res: any, body: { password: string, token: string }) {
+    const { token, password } = body;
+
+    const decodedToken = await this.jwtService.verify(token);
+    if (!decodedToken) {
+      return this.responseService.ErrorResponse(res, 'Verification failed')
+    }
+
+    const { id } = decodedToken;
+    const cachedToken = await this.redisService.getCaching(`reset-${id}`);
+    if (token !== cachedToken) {
+      return this.responseService.ErrorResponse(res, 'Invalid or expired reset token.')
+    }
+
+    const user = await this.userMethodDB.findById(id);
+    const checkPass = await this.comparePassword(password, user.password);
+    if (checkPass) {
+      return this.responseService.ErrorResponse(res, 'The new password matches the old password. Please set another password.')
+    }
+
+    await this.redisService.delCaching(id);
+
+    const hashPass = await this.hashPassword(password);
+    await this.userMethodDB.update(id, { password: hashPass })
+    return this.responseService.successResponse(res, 'Reset password successfully')
+  }
 }
