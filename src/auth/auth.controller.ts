@@ -1,63 +1,84 @@
 import {
-    Body,
-    Controller,
-    Get,
-    HttpException,
-    HttpStatus,
-    Post,
-    Query,
-    Request,
-    Response,
-    UseGuards,
+  Body,
+  Controller,
+  Get,
+  HttpException,
+  HttpStatus,
+  Post,
+  Query,
+  Request,
+  Response,
+  UseGuards,
 } from '@nestjs/common';
 import { LocalAuthGuard } from './guards/local.guard';
 import { AuthService } from './auth.service';
 import { RegisterDto } from "./dtos/auth.dto"
 import { JwtAuthGuard } from './guards/jwt.guard';
+import { ResponseService } from '../response/response.service';
 
 @Controller('auth')
 export class AuthController {
-    constructor(
-        private authService: AuthService,
-    ) { }
+  constructor(
+    private authService: AuthService,
+    private readonly responseService: ResponseService,
 
-    @UseGuards(LocalAuthGuard)
-    @Post('/login')
-    async login(@Request() request): Promise<any> {
-        return await this.authService.login(request.user);
+  ) { }
+
+  @UseGuards(LocalAuthGuard)
+  @Post('login')
+  async login(@Request() request, @Response() res): Promise<any> {
+    try {
+      const result = await this.authService.login(res, request.user);
+    } catch (error) {
+      res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
     }
+  }
 
-    @Post('/register')
-    async registerUser(@Body() input: RegisterDto) {
-        const user = await this.authService.register(input);
-        const { password, ...userData } = user
-        throw new HttpException({ message: 'Created account successfully. Please check mail to active account.', user: userData }, HttpStatus.ACCEPTED);
-
+  @Post('register')
+  async registerUser(@Body() input: RegisterDto, @Response() res): Promise<any> {
+    try {
+      await this.authService.register(res, input);
+    } catch (error) {
+      res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
     }
+  }
 
-    @Get('verify-get-new-password')
-    async verifyEmail(@Query('token') token: string) {
-        console.log(123,token)
-        await this.authService.verifyGetNewPassword(token)
-        throw new HttpException({ message: 'Get new Password successfully' }, HttpStatus.ACCEPTED);
-
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
+  async getUserLogout(@Request() req, @Response() res): Promise<any> {
+    try {
+      await this.authService.logout(res, req)
+    } catch (error) {
+      res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
     }
+  }
 
-    @UseGuards(JwtAuthGuard)
-    @Post('/logout')
-    async getUserLogout(@Request() request): Promise<Response> {
-        this.authService.logout(request)
-        throw new HttpException({ message: 'Logout successfully' }, HttpStatus.ACCEPTED);
+  @Get('active-user')
+  async activeUser(@Query() query, @Response() res): Promise<any> {
+    try {
+      await this.authService.activeAccount(res, query.token)
+    } catch (error) {
+      res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
     }
+  }
 
-    @Get('/verify')
-    async activeUser(@Query() query): Promise<any> {
-        await this.authService.activeAccount(query.userId)
+  @Post('forgot-password')
+  async sendRequestPasswordLink(@Body('email') email: string, @Response() res: any): Promise<any> {
+    try {
+      await this.authService.sendRequestPasswordLink(res, email);
+    } catch (error) {
+      res.status(HttpStatus.BAD_REQUEST).json({ message: error.message });
     }
+  }
 
-    @Post('/get-new-password')
-    async getNewPassword(@Body() input: any): Promise<any> {
-        await this.authService.getNewPassword(input.email)
+  @Post('validate-reset-token-password')
+  async validateResetToken(@Body() body: { password: string; token: string }, @Response() res: any) {
+    try {
+      await this.authService.validateResetToken(res, body);
+    } catch (error) {
+      return this.responseService.ErrorResponse(res, error.message);
     }
+  }
+
 
 }

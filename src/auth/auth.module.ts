@@ -13,12 +13,15 @@ import { MailModule } from '../mail/mail.module';
 import { UserMethodDB } from "../users/user.methodDB"
 import { BullModule } from '@nestjs/bull';
 import { EmailProcessor } from "../queues/email.processor"
+import { ResponseModule } from '../response/response.module';
+import { ResponseService } from '../response/response.service';
 @Module({
   imports: [
     BullModule.registerQueue({
       name: 'email_sending',
     }),
     RedisModule,
+    ResponseModule,
     MailModule,
     PassportModule,
     TypeOrmModule.forFeature([User]),
@@ -27,7 +30,7 @@ import { EmailProcessor } from "../queues/email.processor"
       signOptions: { expiresIn: EXPIRES_TIME_SECONDS },
     }),
   ],
-  providers: [AuthService, LocalStrategy, RedisService, UserMethodDB, EmailProcessor],
+  providers: [AuthService, LocalStrategy, RedisService, UserMethodDB, EmailProcessor, ResponseService],
   controllers: [AuthController],
 
 })

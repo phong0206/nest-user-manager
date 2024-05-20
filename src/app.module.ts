@@ -14,6 +14,7 @@ import { CommentsModule } from './comments/comments.module';
 import { LikesModule } from './likes/likes.module';
 import { BullModule } from '@nestjs/bull';
 import { PlayerModule } from './player/player.module';
+import { ResponseModule } from './response/response.module';
 
 
 @Module({
@@ -58,8 +59,7 @@ import { PlayerModule } from './player/player.module';
     CommentsModule,
     LikesModule,
     PlayerModule,
+    ResponseModule,
   ],
-  controllers: [],
-  providers: []
 })
 export class AppModule { }
