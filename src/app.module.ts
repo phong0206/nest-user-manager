@@ -13,7 +13,6 @@ import { FollowsModule } from './follows/follows.module';
 import { CommentsModule } from './comments/comments.module';
 import { LikesModule } from './likes/likes.module';
 import { BullModule } from '@nestjs/bull';
-import { PlayerModule } from './player/player.module';
 import { ResponseModule } from './response/response.module';
 
 
@@ -58,7 +57,6 @@ import { ResponseModule } from './response/response.module';
     FollowsModule,
     CommentsModule,
     LikesModule,
-    PlayerModule,
     ResponseModule,
   ],
 })
